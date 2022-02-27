@@ -19,14 +19,14 @@ chain, this chain will be drawn on the image to show the movement of a feature.
 We only accept features if they are not too far off, meaning we filter outliers
 using RANSAC algorithm and a `FundamentalMatrixTransform` fit.
 (FundamentalMatrix: ... relates corresponding points between a pair of
-uncalibrated images.)
+uncalibrated images.) (p.238)
 
 Yea and thats it, the question is now can we use the drawn chains to calculate
 the speed of the moving camera?
 
 Resources:
 * RANSAC, https://www.youtube.com/watch?v=9D5rrtCC_E0&ab_channel=CyrillStachniss
-
+* Matrices, https://www.youtube.com/watch?v=auhpPoAqprk&ab_channel=CyrillStachniss
 '''
 
 W = 640
@@ -54,7 +54,7 @@ class FeatureExctractor(object):
     kps, des = self.orb.compute(img, kps)
 
     if self.last is None:
-      # on the frame run we dont have previous feature points
+      # on the first frame we dont have previous feature points
       self.last = {'kps': kps, 'des': des}
       return [], None
 
@@ -77,8 +77,7 @@ class FeatureExctractor(object):
         c_chain.append(new_p)
         self.d_chain[new_p] = c_chain
 
-    # TODO: filter
-    
+    # filter via fundamental matrix and ransac algorithm
     if len(latest_features) > 0:
       latest_features = np.array(latest_features)
       model, inliers = ransac((latest_features[:, 0], latest_features[:, 1]),
@@ -87,7 +86,6 @@ class FeatureExctractor(object):
                               residual_threshold=1,
                               max_trials=100)
       latest_features = latest_features[inliers]
-    
 
     # update last detected features
     self.last = {'kps': kps, 'des': des}
